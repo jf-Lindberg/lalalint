@@ -1,32 +1,42 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2022 Filip Lindberg jakob.filip.lindberg@gmail.com
 */
 package cmd
 
 import (
 	"fmt"
-	"os"
-
+	"github.com/jf-Lindberg/lalalint/pkg/validate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
 )
 
-var cfgFile string
+var (
+	cfgFile    string
+	outputFile string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "lalalint",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "lalalint <filename> [flags]",
+	Short: "Lalalint is a LaTeX linter for .tex files. Basic usage: lalalint <file>.",
+	Long:  `Lalalint is a LaTeX linter for .tex files.`,
+	Args:  cobra.ExactArgs(1),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fileName := args[0]
+		err := validate.FileName(fileName)
+		if err != nil {
+			return err
+		}
+
+		output := cmd.Flags().Lookup("write").Value
+		fmt.Println(output)
+		fmt.Println("GetString:", viper.GetString("write"))
+
+		return nil
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -45,11 +55,12 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.lalalint.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.lalalint.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().StringVarP(&outputFile, "write", "w", "", "Name of output file ending with .tex")
+	rootCmd.Flags().BoolP("overwrite", "o", false, "Overwrites input file")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -67,6 +78,8 @@ func initConfig() {
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".lalalint")
 	}
+
+	viper.BindPFlag("write", rootCmd.Flags().Lookup("write"))
 
 	viper.AutomaticEnv() // read in environment variables that match
 
