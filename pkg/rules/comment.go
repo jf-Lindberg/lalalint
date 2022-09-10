@@ -9,6 +9,8 @@ import (
 )
 
 // IDEA: make this into a factory. Create "LintCharacter" with options to add a character before or after the specified char
+// Make LintComment return an error as second return
+// send line number as parameter? otherwise handling error and printf with "<err>" on line x
 
 /*
 LintComment Checks if comment is formatted correctly, meaning that there should be a space after valid comments.
@@ -18,7 +20,7 @@ func LintComment(line string) string {
 	// Checks that line includes %
 	if index := commentIndex(line, "%"); index != -1 {
 		// First checks if index is 0, then checks that previous character is not the escape character.
-		// This check is in place to avoid index out of range errors.
+		// This check is in place to avoid index out of range errors and to not format comments that are escaped.
 		if index == 0 || !commentEscaped(index, line) {
 			// If comment is correct, leave and return whole line
 			if !commentIsCorrect(index, line) {

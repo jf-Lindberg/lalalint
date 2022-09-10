@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/jf-Lindberg/lalalint/pkg/reader"
 	"github.com/jf-Lindberg/lalalint/pkg/validate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,9 +32,11 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		output := cmd.Flags().Lookup("write").Value
-		fmt.Println(output)
-		fmt.Println("GetString:", viper.GetString("write"))
+		reader.Reader(fileName)
+
+		/*		output := cmd.Flags().Lookup("write").Value
+				fmt.Println(output)
+				fmt.Println("GetString:", viper.GetString("write"))*/
 
 		return nil
 	},
