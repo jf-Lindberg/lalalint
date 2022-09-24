@@ -2,7 +2,7 @@
 Copyright © 2022 Filip Lindberg fili21@student.bth.se
 */
 
-package lalalint
+package linter
 
 import (
 	"fmt"

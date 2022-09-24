@@ -4,7 +4,7 @@ Copyright © 2022 Filip Lindberg fili21@student.bth.se
 package cmd
 
 import (
-	"github.com/jf-Lindberg/lalalint/lalalint"
+	"github.com/jf-Lindberg/lalalint/linter"
 	"github.com/jf-Lindberg/lalalint/validate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,7 +28,7 @@ var checkCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for i := range args {
-			lalalint.Check(args[i])
+			linter.Check(args[i])
 		}
 
 		return nil

@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"github.com/jf-Lindberg/lalalint/helper"
-	"github.com/jf-Lindberg/lalalint/lalalint"
+	"github.com/jf-Lindberg/lalalint/linter"
 	"github.com/jf-Lindberg/lalalint/validate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,7 +52,7 @@ You can also change the default behaviour by editing the config file.`,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filename := args[0]
-		lalalint.Print(filename)
+		linter.Print(filename)
 
 		return nil
 	},

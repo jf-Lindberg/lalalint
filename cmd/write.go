@@ -4,7 +4,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/jf-Lindberg/lalalint/lalalint"
+	"github.com/jf-Lindberg/lalalint/linter"
 	"github.com/jf-Lindberg/lalalint/validate"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +26,7 @@ var writeCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		input, output := args[0], args[1]
-		lalalint.Write(input, output)
+		linter.Write(input, output)
 
 		return nil
 	},
