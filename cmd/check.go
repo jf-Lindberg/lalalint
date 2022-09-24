@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Filip Lindberg fili21@student.bth.se
 */
 package cmd
 
@@ -23,8 +23,7 @@ var checkCmd = &cobra.Command{
 				return err
 			}
 		}
-		rootCmd.PersistentFlags().Lookup("showErrors")
-		viper.Set("showErrors", viper.GetBool("commands.check.showErrors"))
+		viper.Set("global.showErrors", viper.GetBool("commands.check.showErrors"))
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
