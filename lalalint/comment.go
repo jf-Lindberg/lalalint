@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Filip Lindberg jakob.filip.lindberg@gmail.com
+Copyright © 2022 Filip Lindberg fili21@student.bth.se
 */
 
 package lalalint
@@ -8,10 +8,6 @@ import (
 	"fmt"
 	"strings"
 )
-
-// IDEA: make this into a factory. Create "LintCharacter" with options to add a character before or after the specified char
-// Make LintComment return an error as second return
-// send line number as parameter? otherwise handling error and printf with "<err>" on line x
 
 type BadCommentError struct {
 	Row   int
