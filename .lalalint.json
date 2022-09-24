@@ -1,25 +1,27 @@
 {
-  "showErrors": false,
   "commands": {
+    "check": {
+      "lint": true,
+      "showerrors": true
+    },
     "print": {
       "lint": false
     },
     "write": {
       "lint": true
-    },
-    "check": {
-      "lint": true,
-      "showErrors": true
     }
   },
+  "global": {
+    "showerrors": true
+  },
   "rules": {
-    "spaceAfterComments": {
-      "enabled": true,
-      "symbol": "%"
-    },
-    "indentEnvironments": {
+    "indentenvironments": {
       "enabled": true,
       "indent": 1
+    },
+    "spaceaftercomments": {
+      "enabled": true,
+      "symbol": "%"
     }
   }
 }
