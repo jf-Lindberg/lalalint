@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Filip Lindberg jakob.filip.lindberg@gmail.com
+Copyright © 2022 Filip Lindberg fili21@student.bth.se
 */
 package cmd
 
@@ -22,13 +22,6 @@ var rootCmd = &cobra.Command{
 	Use:   "lalalint",
 	Short: "Lalalint is a LaTeX linter for .tex files. Basic usage: lalalint <file>.",
 	Long:  `Lalalint is a LaTeX linter for .tex files.`,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if cmd.PersistentFlags().Lookup("errors").Changed {
-			viper.Set("errors", true)
-		}
-
-		return nil
-	},
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cmd.Help()
 		helper.LogFatal(err)
@@ -54,8 +47,9 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().Bool("nocomments", false, "turns off comment rule")
 	rootCmd.PersistentFlags().BoolP("errors", "e", false, "prints errors (default is off except for the check command)")
-	viper.BindPFlag("showErrors", rootCmd.PersistentFlags().Lookup("errors"))
+	viper.BindPFlag("global.showErrors", rootCmd.PersistentFlags().Lookup("errors"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -73,5 +67,9 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
+
+	if rootCmd.PersistentFlags().Lookup("nocomments").Changed {
+		viper.Set("rules.spaceAfterComments.enabled", false)
 	}
 }
