@@ -7,17 +7,10 @@ git clone https://github.com/jf-Lindberg/lalalint
 ```
 
 ## How to use
-Currently, binaries are compiled for macOS which means you can run it without setting anything else up.
-### macOS x86 (Intel processors)
-Run lalalint on macOS with an Intel processor:
+Currently, a binary is compiled for macOS which means you can run it without setting anything else up.
+### macOS (works for both x86 and ARM processors)
 ```
-./lalalint_intel <command> [argument] [option]
-```
-
-### macOS ARM (Silicon/MX processors)
-Run lalalint on macOS with a Silicon processor:
-```
-./lalalint_silicon <command> [argument] [option]
+./lalalint_macos <command> [argument] [option]
 ```
 
 ### Support for Linux and Windows
