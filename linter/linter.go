@@ -19,72 +19,6 @@ type Line struct {
 	Content string
 }
 
-//// Config Contains unmarshalled values from JSON config.
-//type Config struct {
-//	Global   Global   `mapstructure:"global"`
-//	Commands Commands `mapstructure:"commands"`
-//	Rules    Rules    `mapstructure:"rules"`
-//}
-//
-//type Global struct {
-//	ShowErrors bool `mapstructure:"showErrors"`
-//}
-//
-//type Commands struct {
-//	Print PrintCfg `mapstructure:"print"`
-//	Write WriteCfg `mapstructure:"write"`
-//	Check CheckCfg `mapstructure:"check"`
-//}
-//
-//type PrintCfg struct {
-//}
-//
-//type WriteCfg struct {
-//}
-//
-//type CheckCfg struct {
-//}
-//
-//type Rules struct {
-//	SpaceAfterComments SpaceAfterComments `mapstructure:"spaceAfterComments"`
-//	IndentEnvironments IndentEnvironments `mapstructure:"indentEnvironments"`
-//}
-//
-//type SpaceAfterComments struct {
-//	Enabled bool   `mapstructure:"enabled"`
-//	Symbol  string `mapstructure:"symbol"`
-//}
-//
-//type IndentEnvironments struct {
-//	Enabled bool `mapstructure:"enabled"`
-//	Indent  int  `mapstructure:"indent"`
-//}
-//
-//type Comment struct {
-//	Content Line
-//	SpaceAfterComments
-//}
-//
-//type rule interface {
-//	lint() Line
-//}
-//
-//var rulesCfg Rules
-//
-//func (c Comment) lint() Line {
-//	if c.Enabled {
-//		line, err := LintComment(c.Content, c.Symbol)
-//		if err != nil {
-//			lintErr = append(lintErr, err)
-//		}
-//		return line
-//	}
-//	return c.Content
-//}
-
-// would it be possible to write the above function in a more generalized way?
-// for example, send in a rule as arg, if r enabled, do lint
-
 var lintErr = make([]error, 0)
 var indentLevel int
 
@@ -143,28 +77,9 @@ func printLinterErrors() {
 	}
 }
 
-//func unmarshalCfg() {
-//	// Unwraps JSON config into rulesCfg struct
-//	err := viper.UnmarshalKey("rules", &rulesCfg)
-//	helper.LogFatal(err)
-//}
-
-//func countLines(filename string) int {
-//	path := "./data/"
-//	file := getFile(path, filename)
-//	scanner := bufio.NewScanner(file)
-//
-//	count := 0
-//	for scanner.Scan() {
-//		count++
-//	}
-//	return count
-//}
-
 func Check(input string) {
 	// Initialises timer for benchmarking
 	start := time.Now()
-	//unmarshalCfg() << might bring back
 	// Creates channels
 	lines := make(chan Line)
 	readerr := make(chan error)
@@ -195,7 +110,6 @@ loop:
 func Print(input string) {
 	// Initialises timer for benchmarking
 	start := time.Now()
-	//unmarshalCfg() << might bring back
 	// Creates channels
 	lines := make(chan Line)
 	readerr := make(chan error)
@@ -231,7 +145,6 @@ loop:
 
 func Write(input string, output string) {
 	start := time.Now()
-	//unmarshalCfg() << might bring back
 	lines := make(chan Line)
 	readerr := make(chan error)
 

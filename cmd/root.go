@@ -13,14 +13,13 @@ import (
 )
 
 var (
-	cfgFile   string
-	inputFile string
+	cfgFile string
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "lalalint",
-	Short: "Lalalint is a LaTeX linter for .tex files. Basic usage: lalalint <file>.",
+	Short: "Lalalint is a LaTeX linter for .tex files. Basic usage: lalalint <command> [arguments] [options].",
 	Long:  `Lalalint is a LaTeX linter for .tex files.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cmd.Help()
