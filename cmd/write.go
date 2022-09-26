@@ -13,7 +13,7 @@ import (
 var writeCmd = &cobra.Command{
 	Use:   "write <inputfile> <outputfile>",
 	Short: "Writes a linted version of the input file to the output file.",
-	Long:  `longer description`,
+	Long:  ``,
 	Args:  cobra.MinimumNArgs(2),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		for i := range args {
