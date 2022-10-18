@@ -24,3 +24,18 @@ You should then be able to run lalalint via:
 ```
 ./lalalint <command> [argument] [option]
 ```
+
+## Configuration
+
+The JSON-file has three headings - "commands", "global" and "rules". For commands, you can turn linting on and off 
+by changing the "lint" parameter to false. If you want errors to be turned off globally, change "showerrors" to 
+false under the global heading. 
+
+For the indentation rules and blank line rule, you can change the amount of tabs or blank lines to be inserted 
+through "tabs" and "lines" respectively.
+
+## Bill of materials
+### Cobra
+### Viper
+### ColoredCobra
+### Color by Fatih
