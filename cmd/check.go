@@ -15,14 +15,20 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Outputs all of the linter errors found to the terminal.",
 	Long:  `longer description`,
-	Args:  cobra.MinimumNArgs(1),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
 		for i := range args {
 			err := validate.FileName(args[i])
 			if err != nil {
 				return err
 			}
 		}
+
+		return nil
+	},
+	PreRunE: func(cmd *cobra.Command, args []string) error {
 		viper.Set("global.showErrors", viper.GetBool("commands.check.showErrors"))
 		return nil
 	},

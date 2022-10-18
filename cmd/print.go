@@ -36,18 +36,25 @@ If you would like linter errors to be printed to the terminal as well, you can u
 The lint and error flags must be used together, the command "print example.tex -e" will show an error. 
 
 You can also change the default behaviour by editing the config file.`,
-	Args: cobra.MinimumNArgs(1),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
 		for i := range args {
 			err := validate.FileName(args[i])
 			if err != nil {
 				return err
 			}
 		}
+		return nil
+	},
+	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if errors, _ := rootCmd.PersistentFlags().GetBool("errors"); errors != false {
-			cmd.MarkFlagRequired("lint")
+			err := cmd.MarkFlagRequired("lint")
+			if err != nil {
+				return err
+			}
 		}
-
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
