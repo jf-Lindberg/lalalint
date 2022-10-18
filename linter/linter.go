@@ -10,6 +10,7 @@ import (
 	"github.com/jf-Lindberg/lalalint/helper"
 	"github.com/spf13/viper"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -20,133 +21,194 @@ type Line struct {
 }
 
 var lintErr = make([]error, 0)
-var indentLevel int
+
+func doNothing(lintedStream <-chan Line) {
+	for _ = range lintedStream {
+	}
+}
 
 // getFile Gets a pointer to a file and returns it. If unsuccessful, logs error and exits with code 0
 func getFile(path string, filename string) *os.File {
-	file, err := os.Open(path + filename)
+	file, err := os.OpenFile(path+filename, os.O_CREATE|os.O_RDWR, os.ModePerm)
 	helper.LogFatal(err)
 	return file
 }
 
-// getLine Continuously feeds the channel "lines" with Line structs. If err, feeds to "readerr" chan.
-func getLine(filename string, lines chan Line, readerr chan error) {
-	// Gets file and defers closing to ensure cleanup
+// getLine
+func getLines(filename string) <-chan Line {
 	path := "./data/"
 	file := getFile(path, filename)
-	defer file.Close()
-	// Initializes scanner
-	scanner := bufio.NewScanner(file)
-	// Initializes row number
-	row := 1
-	// Feeds Line structs to lines channel
-	for scanner.Scan() {
-		lines <- Line{row, scanner.Text()}
-		row++
-	}
-	// Feeds any errors to readerr channel
-	readerr <- scanner.Err()
-}
+	inputStream := make(chan Line)
 
-// lintLine Calls all enabled linter rules and returns a Line struct with the fixed content
-func lintLine(line Line) Line {
-	// check if environment and add to / subtract from indentLevel
-	//	line = Comment{line, rulesCfg.SpaceAfterComments}.lint() << might bring back
-	// rulesCfg.SpaceAfterComments.Enabled << might bring back
-	if viper.GetBool("rules.spaceAfterComments.enabled") {
-		var err error
-		line, err = LintComment(line, viper.GetString("rules.spaceAfterComments.symbol"))
-		if err != nil {
-			lintErr = append(lintErr, err)
+	go func() {
+		defer file.Close()
+		defer close(inputStream)
+		scanner := bufio.NewScanner(file)
+		row := 1
+		for scanner.Scan() {
+			content := strings.TrimSpace(scanner.Text())
+			inputStream <- Line{row, content}
+			row++
 		}
-	}
-	if viper.GetBool("rules.indentEnvironments.enabled") {
-		line = IndentLine(indentLevel, viper.GetInt("rules.indentEnvironments.indent"), line)
-	}
-	return line
+		if err := scanner.Err(); err != nil {
+			helper.LogFatal(err)
+		}
+	}()
+
+	return inputStream
 }
 
-func printLinterErrors() {
-	if viper.GetBool("global.showErrors") {
-		if len(lintErr) > 0 {
-			helper.AnnounceStart("Errors found:")
-			for i := range lintErr {
-				helper.PrintLintErr(lintErr[i])
+// lint is the main function for calling all the linter rules.
+// needs a LOT of refactoring, totally spaghetti at the moment
+func lint(inputStream <-chan Line) <-chan Line {
+	var err error
+	var prev Line
+	// sets up chan for linted lines
+	lintedStream := make(chan Line)
+
+	go func() {
+		// ensures chan is closed when linting is done
+		defer close(lintedStream)
+		// loops through input chan (feed from file)
+		for line := range inputStream {
+			for _, newline := range NewlineAfterSentence(line) {
+				// "This is a line\nIt continues here"
+				line = newline.line
+				if err = newline.err; err != nil {
+					lintErr = append(lintErr, err)
+				}
+				if viper.GetBool("rules.spaceaftercomments.enabled") {
+					line, err = SpaceAfterComment(line)
+				}
+				if err != nil {
+					lintErr = append(lintErr, err)
+				}
+				if viper.GetBool("rules.indentenvironments.enabled") {
+					tabs := viper.GetInt("rules.indentenvironments.tabs")
+					indentLevel := viper.GetInt("rules.indentenvironments.indentlevel")
+					line = IndentEnvironments(indentLevel, tabs, line)
+				}
+				// kanske hålla koll på hur många blanka rader innan så det funkar även med 2-3 som setting
+				if viper.GetBool("rules.blanklinesbeforesection.enabled") && prev.Content != "" {
+					for _, linestruct := range BlankLinesBeforeSection(viper.GetInt("rules.blanklinesbeforesection.lines"), line) {
+						lintedStream <- linestruct
+					}
+					prev = line
+					continue
+				}
+				prev = line
+				lintedStream <- line
 			}
 		}
+	}()
+
+	return lintedStream
+}
+
+func overwriteFile(lintedStream <-chan Line, input string) {
+	path := "./data/"
+	backupName := "temp" + input
+	backup, err := os.Create(path + backupName)
+	if err != nil {
+		helper.LogFatal(err)
+	}
+	for line := range lintedStream {
+		_, err := backup.WriteString(line.Content + "\n")
+		helper.LogFatal(err)
+	}
+	err = os.Rename(path+backupName, path+input)
+	if err != nil {
+		helper.LogFatal(err)
+	}
+}
+
+func printElapsed(cmd string, t time.Duration) {
+	fmt.Printf("%s took %s\n", cmd, t)
+}
+
+func printLines(lintedStream <-chan Line) {
+	color.Set(color.FgHiWhite)
+	for line := range lintedStream {
+		fmt.Printf("%s\n", line.Content)
+	}
+	color.Unset()
+}
+
+func printLinterProblems() {
+	if viper.GetBool("global.showErrors") {
+		if len(lintErr) > 0 {
+			helper.AnnounceStart("Problems found:\n")
+			color.Set(color.FgHiRed)
+			for i := range lintErr {
+				fmt.Printf("\t%s\n", lintErr[i])
+			}
+			color.Unset()
+			fmt.Println()
+		}
+	}
+}
+
+func writeLines(lintedStream <-chan Line, outputFile *os.File) {
+	for line := range lintedStream {
+		_, err := outputFile.WriteString(line.Content + "\n")
+		helper.LogFatal(err)
 	}
 }
 
 func Check(input string) {
 	// Initialises timer for benchmarking
 	start := time.Now()
-	// Creates channels
-	lines := make(chan Line)
-	readerr := make(chan error)
 
 	helper.AnnounceStart("Checking " + input + " for errors")
-	// Starts goroutine to feed lines into channel
-	go getLine(input, lines, readerr)
+	lineStream := getLines(input)
+	lintedStream := lint(lineStream)
 
-loop:
-	// Continuously reads from line channel until it closes (when there's nothing being fed to it)
-	for {
-		select {
-		case line := <-lines:
-			lintLine(line)
-		case err := <-readerr:
-			helper.LogFatal(err)
-			break loop
-		}
-	}
+	doNothing(lintedStream)
 
 	// Finishes up - prints errors, an announcement and the time elapsed since function was called
-	printLinterErrors()
+	printLinterProblems()
 	helper.AnnounceDone("✔ Check finished")
 	elapsed := time.Since(start)
-	fmt.Printf("Check took %s\n", elapsed)
+	printElapsed("Check", elapsed)
 }
 
 func Print(input string) {
 	// Initialises timer for benchmarking
 	start := time.Now()
-	// Creates channels
-	lines := make(chan Line)
-	readerr := make(chan error)
-
 	helper.AnnounceStart("Printing " + input)
 	// Starts goroutine to feed lines into channel
-	go getLine(input, lines, readerr)
+	lineStream := getLines(input)
+	lintedStream := lint(lineStream)
 
-	color.Set(color.FgHiWhite)
-loop:
-	// Continuously reads from line channel until it closes (when there's nothing being fed to it)
-	for {
-		select {
-		case line := <-lines:
-			if viper.GetBool("commands.print.lint") == true {
-				line = lintLine(line)
-			}
-			fmt.Printf("%d) %s\n", line.Row, line.Content)
-		case err := <-readerr:
-			helper.LogFatal(err)
-			break loop
-		}
-	}
+	printLines(lintedStream)
+
 	// Finishes up - prints errors, an announcement and the time elapsed since function was called
 	color.Unset()
-	if viper.GetBool("commands.print.lint") == true {
-		printLinterErrors()
+	if viper.GetBool("commands.print.lint") {
+		printLinterProblems()
 	}
 	helper.AnnounceDone("✔ Print done")
 	elapsed := time.Since(start)
-	fmt.Printf("Print took %s\n", elapsed)
+	printElapsed("Print", elapsed)
+}
+
+func Overwrite(input string) {
+	start := time.Now()
+
+	helper.AnnounceStart("Overwriting " + input)
+
+	lineStream := getLines(input)
+	lintedStream := lint(lineStream)
+
+	overwriteFile(lintedStream, input)
+
+	printLinterProblems()
+	elapsed := time.Since(start)
+	printElapsed("Overwrite", elapsed)
 }
 
 func Write(input string, output string) {
 	start := time.Now()
-	lines := make(chan Line)
-	readerr := make(chan error)
 
 	outputPath := "./data/output/"
 	outputFile, err := os.Create(outputPath + output)
@@ -154,23 +216,13 @@ func Write(input string, output string) {
 
 	helper.AnnounceStart("Writing source '" + input + "' to file '" + output + "'")
 
-	go getLine(input, lines, readerr)
+	lineStream := getLines(input)
+	lintedStream := lint(lineStream)
 
-loop:
-	for {
-		select {
-		case line := <-lines:
-			line = lintLine(line)
-			_, err := outputFile.WriteString(line.Content + "\n")
-			helper.LogFatal(err)
-		case err := <-readerr:
-			helper.LogFatal(err)
-			break loop
-		}
-	}
+	writeLines(lintedStream, outputFile)
 
-	printLinterErrors()
+	printLinterProblems()
 	helper.AnnounceDone("✔ Done writing, your file is saved at '" + outputPath + output + "'")
 	elapsed := time.Since(start)
-	fmt.Printf("Write took %s\n", elapsed)
+	printElapsed("Write", elapsed)
 }

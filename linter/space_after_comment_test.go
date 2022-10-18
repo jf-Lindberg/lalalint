@@ -15,7 +15,7 @@ type commentTest struct {
 	err      error
 }
 
-// commentTests are the test cases called by TestComment
+// commentTests are the test cases called by TestSpaceAfterComment
 var commentTests = []commentTest{
 	commentTest{input: createLine("%this is wrong"), expected: createLine("% this is wrong"), err: BadCommentError{}},
 	commentTest{input: createLine("% this is right"), expected: createLine("% this is right"), err: nil},
@@ -30,12 +30,12 @@ func createLine(input string) Line {
 	return Line{0, input}
 }
 
-func TestComment(t *testing.T) {
+func TestSpaceAfterComment(t *testing.T) {
 	for _, test := range commentTests {
-		if output, _ := LintComment(test.input, "%"); output != test.expected {
+		if output, _ := SpaceAfterComment(test.input); output != test.expected {
 			t.Errorf("Output %q not equal to expected %q. Types: %T %T", output, test.expected, output, test.expected)
 		}
-		if _, err := LintComment(test.input, "%"); !helper.CompareType(test.err, err) {
+		if _, err := SpaceAfterComment(test.input); !helper.CompareType(test.err, err) {
 			t.Errorf("Output %q not equal to expected %q. Types: %T %T", err, test.err, err, test.err)
 		}
 	}
