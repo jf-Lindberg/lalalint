@@ -29,9 +29,3 @@ func LogFatal(e error) {
 		log.Fatal(e)
 	}
 }
-
-func PrintLintErr(err error) {
-	color.Set(color.FgHiRed)
-	fmt.Println(err)
-	color.Unset()
-}
