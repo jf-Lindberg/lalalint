@@ -15,6 +15,7 @@ type commentTest struct {
 	err      error
 }
 
+// commentTests are the test cases called by TestComment
 var commentTests = []commentTest{
 	commentTest{input: createLine("%this is wrong"), expected: createLine("% this is wrong"), err: BadCommentError{}},
 	commentTest{input: createLine("% this is right"), expected: createLine("% this is right"), err: nil},

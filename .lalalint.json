@@ -17,11 +17,19 @@
   "rules": {
     "indentenvironments": {
       "enabled": true,
-      "indent": 1
+      "tabs": 1,
+      "indentlevel": 0,
+      "excluded": ["document"]
     },
     "spaceaftercomments": {
+      "enabled": true
+    },
+    "blanklinesbeforesection": {
       "enabled": true,
-      "symbol": "%"
+      "lines": 1
+    },
+    "newlineaftersentence": {
+      "enabled": true
     }
   }
 }
