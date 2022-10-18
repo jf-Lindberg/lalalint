@@ -6,7 +6,6 @@ package validate
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"regexp"
 )
 
@@ -19,8 +18,7 @@ func (e BadFileNameError) Error() string {
 }
 
 func FileName(fileName string) error {
-	if found, _ := regexp.MatchString(".+.tex$", fileName); found != true {
-		color.Set(color.Bold, color.FgHiRed)
+	if found, _ := regexp.MatchString("(.+.)(.tex|.bib|.tikz)$", fileName); found != true {
 		return BadFileNameError{fileName}
 	}
 
