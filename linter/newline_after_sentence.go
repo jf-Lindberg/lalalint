@@ -2,54 +2,41 @@ package linter
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"regexp"
-	"strings"
 )
 
 type NoNewLine struct {
 	Row int
 }
 
-func (e NoNewLine) Error() string {
+type NewlineAfterSentenceErr struct {
+	Row int
+}
+
+func (e NewlineAfterSentenceErr) Error() string {
 	return fmt.Sprintf("no newline after sentence on row %d", e.Row)
 }
 
-type NewLine struct {
-	line Line
-	err  error
-}
-
-func NewlineAfterSentence(line Line) []NewLine {
-	arr := make([]NewLine, 0)
+// NewlineAfterSentence uses regex to find sentences and add newlines after them.
+// A sentence ending is defined as a non-whitespace character followed by a dot, exclamation or question mark.
+// In order for a sentence to be detected, there needs to be whitespace after the end of sentence directly followed by a character.
+// In other words, a badly formatted sequence of sentences will not be formatted. For example "Foo!bar" would be interpreted as one word.
+// If the original line content is a comment, the newlines that get added will also be comments.
+func NewlineAfterSentence(line Line) (Line, error) {
 	content := line.Content
-	pattern := regexp.MustCompile("(?P<pre>[^\\s])(?P<end>[.!?])\\s+(?P<post>[A-Z])")
+	pattern := regexp.MustCompile(`(?P<pre>[^\s])(?P<end>[.!?])\s+(?P<post>[\w])`)
 	// Regexp object returns empty string if pattern not found
-	if pattern.FindString(content) == "" || !viper.GetBool("rules.newlineaftersentence.enabled") {
-		arr = append(arr, NewLine{line, nil})
-		return arr
+	if pattern.FindString(content) == "" {
+		return line, nil
 	}
-
-	splitLines := splitLines(pattern, line)
-	row := line.Row
-	for i, _ := range splitLines {
-		newline := Line{row, splitLines[i]}
-		arr = append(arr, NewLine{newline, NoNewLine{row}})
-		row++
-	}
-
-	return arr
-}
-
-func splitLines(pattern *regexp.Regexp, line Line) []string {
 	template := "${pre}${end}\n%${post}"
 	cIndex := GetIndex(CommentRegex(), line)
 	sIndex := GetIndex(pattern, line)
-
+	// if no comment or comment is after sentence, change template to not include "%"
 	if cIndex == nil || cIndex[0] > sIndex[0] {
 		template = "${pre}${end}\n${post}"
 	}
-	replaced := pattern.ReplaceAllString(line.Content, template)
+	content = pattern.ReplaceAllString(content, template)
 
-	return strings.Split(replaced, "\n")
+	return Line{line.Row, content}, NewlineAfterSentenceErr{line.Row}
 }
