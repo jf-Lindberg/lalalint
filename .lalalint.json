@@ -1,18 +1,9 @@
 {
-  "commands": {
-    "check": {
-      "lint": true,
-      "showerrors": true
-    },
-    "print": {
-      "lint": false
-    },
-    "write": {
-      "lint": true
-    }
-  },
   "global": {
-    "showerrors": false
+    "verbose": false,
+    "inputdirectory": "./data/",
+    "outputdirectory": "./data/output/",
+    "trimwhitespace": false
   },
   "rules": {
     "indentenvironments": {
