@@ -17,17 +17,38 @@ type commentTest struct {
 
 // commentTests are the test cases called by TestSpaceAfterComment
 var commentTests = []commentTest{
-	commentTest{input: createLine("%this is wrong"), expected: createLine("% this is wrong"), err: BadCommentError{}},
-	commentTest{input: createLine("% this is right"), expected: createLine("% this is right"), err: nil},
-	commentTest{input: createLine(`\%this is escaped`), expected: createLine(`\%this is escaped`), err: nil},
-	commentTest{input: createLine("no comment here"), expected: createLine("no comment here"), err: nil},
-	commentTest{input: createLine("1233213"), expected: createLine("1233213"), err: nil},
-	commentTest{input: createLine("inline %comment wrong"), expected: createLine("inline % comment wrong"), err: BadCommentError{}},
-	commentTest{input: createLine(`inline \%comment escaped`), expected: createLine(`inline \%comment escaped`), err: nil},
-}
-
-func createLine(input string) Line {
-	return Line{0, input}
+	commentTest{
+		input:    CreateLine("%this is wrong"),
+		expected: CreateLine("% this is wrong"),
+		err:      BadCommentError{}},
+	commentTest{
+		input:    CreateLine("% this is right"),
+		expected: CreateLine("% this is right"),
+		err:      nil},
+	commentTest{
+		input:    CreateLine(`\%this is escaped`),
+		expected: CreateLine(`\%this is escaped`),
+		err:      nil},
+	commentTest{
+		input:    CreateLine("no comment here"),
+		expected: CreateLine("no comment here"),
+		err:      nil},
+	commentTest{
+		input:    CreateLine("1233213"),
+		expected: CreateLine("1233213"),
+		err:      nil},
+	commentTest{
+		input:    CreateLine("inline %comment wrong"),
+		expected: CreateLine("inline % comment wrong"),
+		err:      BadCommentError{}},
+	commentTest{
+		input:    CreateLine(`inline \%comment escaped`),
+		expected: CreateLine(`inline \%comment escaped`),
+		err:      nil},
+	commentTest{
+		input:    CreateLine(""),
+		expected: CreateLine(""),
+		err:      nil},
 }
 
 func TestSpaceAfterComment(t *testing.T) {
