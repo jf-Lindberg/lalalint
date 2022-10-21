@@ -1,36 +1,51 @@
 package linter
 
 import (
-	"github.com/spf13/viper"
+	"fmt"
 	"regexp"
+	"strings"
 )
 
-func AddBlankLines(blankLinesCfg int, line Line, arr []Line) []Line {
-	row := line.Row
-	for i := 0; i < blankLinesCfg; i++ {
-		arr = append(arr, Line{row, ""})
-		row++
-	}
-	arr = append(arr, Line{row, line.Content})
-	/*content := strings.Repeat("\n", blankLinesCfg) + line.Content*/
-	return arr
+// NoBlankLineErr is the error returned if a linter problem is found.
+type NoBlankLineErr struct {
+	Row int
 }
 
-// NEEDS TO HAVE A CHECK IN PLACE OF WHETHER NEWLINES ALREADY EXIST
-
-func BlankLinesBeforeSection(blankLinesCfg int, line Line) []Line {
-	arr := make([]Line, 0)
-	if viper.GetBool("rules.blanklinesbeforesection.enabled") && isSection(line.Content) {
-		arr := AddBlankLines(blankLinesCfg, line, arr)
-		return arr
-	}
-
-	arr = append(arr, line)
-	return arr
+// Error message.
+func (e NoBlankLineErr) Error() string {
+	return fmt.Sprintf("no blank line(s) before section on row %d", e.Row)
 }
 
-func isSection(content string) bool {
-	r := "^\\\\(?P<section>(sub)?section|chapter)"
-	pattern := regexp.MustCompile(r)
-	return pattern.Match([]byte(content))
+// addBlankLines adds blank lines to the input line content and returns a Line struct with the new content.
+// If the amount of blank lines already is at the configured amount or higher prior to the input Line, this returns the original Line struct.
+func addBlankLines(blankLinesCfg int, blankLinesBefore int, line Line) (Line, error) {
+	remainder := blankLinesCfg - blankLinesBefore
+	if remainder <= 0 {
+		return line, nil
+	}
+	content := strings.Repeat("\n", remainder) + line.Content
+	err := NoBlankLineErr{line.Row}
+	return Line{line.Row, content}, err
+}
+
+// BlankLinesBeforeSection checks if the input Line contains a non-commented section and calls addBlankLines if it does.
+// It takes three arguments:
+// The input Line.
+// blankLinesCfg which is the amount of blank lines that should be added before a section according to config.
+// blankLinesBefore which is the amount of blank lines that are present before the input Line. This is tracked in the lint function.
+func BlankLinesBeforeSection(blankLinesCfg int, blankLinesBefore int, line Line) (Line, error) {
+	pattern := regexp.MustCompile(`^\\(?P<section>(sub)?section|chapter)`)
+	if isSection(line.Content, pattern) {
+		cIndex := GetIndex(CommentRegex(), line)
+		sIndex := GetIndex(pattern, line)
+		if cIndex == nil || cIndex[0] > sIndex[0] {
+			return addBlankLines(blankLinesCfg, blankLinesBefore, line)
+		}
+	}
+
+	return line, nil
+}
+
+func isSection(content string, r *regexp.Regexp) bool {
+	return r.Match([]byte(content))
 }
