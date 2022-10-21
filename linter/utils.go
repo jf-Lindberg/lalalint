@@ -4,6 +4,10 @@ import (
 	"regexp"
 )
 
+func CreateLine(input string) Line {
+	return Line{0, input}
+}
+
 func CommentRegex() *regexp.Regexp {
 	r := "^%|[^\\\\]%"
 	return regexp.MustCompile(r)
